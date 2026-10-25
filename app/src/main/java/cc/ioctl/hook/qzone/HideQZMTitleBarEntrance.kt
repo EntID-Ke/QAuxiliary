@@ -49,7 +49,7 @@ import io.github.qauxv.util.requireMinQQVersion
 @[FunctionHookEntry UiItemAgentEntry]
 object HideQZMTitleBarEntrance : CommonSwitchFunctionHook(
     targetProc = SyncUtils.PROC_MAIN or SyncUtils.PROC_QZONE,
-    targets = arrayOf(NQZMoment_EntranceEnabled, QZoneFeedxTopEntranceMethod)
+    targets = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) emptyArray() else arrayOf(NQZMoment_EntranceEnabled, QZoneFeedxTopEntranceMethod)
 ) {
 
     override val name = "隐藏QQ空间动态的\"此刻\""
@@ -69,6 +69,19 @@ object HideQZMTitleBarEntrance : CommonSwitchFunctionHook(
     }
 
     override fun initOnce(): Boolean {
+        if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            hookBeforeIfEnabled(Initiator.loadClass("com.qzone.reborn.qzmoment.util.g").getDeclaredMethod("a")) {
+                it.result = false
+            }
+            hookAfterIfEnabled(Initiator.loadClass("com.qzone.reborn.feedx.widget.entrance.QZoneFeedxTopEntranceManagerView")
+                .getDeclaredMethod("k0")) {
+                (it.thisObject as View).apply {
+                    isClickable = false
+                    visibility = View.GONE
+                }
+            }
+            return true
+        }
         try {
             val kQZMTitleBarEntranceManager = Initiator.loadClass("com.qzone.reborn.qzmoment.itemview.QZMTitleBarEntranceManager")
             // com.tencent.mobileqq.zplan_impl.R.id.qzm_entrance_root

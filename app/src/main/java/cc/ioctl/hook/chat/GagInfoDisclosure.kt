@@ -128,8 +128,13 @@ object GagInfoDisclosure : CommonSwitchFunctionHook(
     override fun initOnce(): Boolean {
         if (requireMinQQVersion(QQVersion.QQ_9_0_73) || requireMinTimVersion(TIMVersion.TIM_4_0_95_BETA)) {
             hookAfterIfEnabled(DexKit.requireMethodFromCache(Hd_GagInfoDisclosure_Method)) { param ->
-                val msgInfo = param.args[1]
+                val msgInfo = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+                    param.thisObject.get("j").also {
+                        if ((it.get("shMsgType") as Short).toInt() != 0x2dc) return@hookAfterIfEnabled
+                    }
+                } else param.args[1]
                 val vMsg = msgInfo.get("vMsg") as ByteArray? ?: return@hookAfterIfEnabled
+                if (vMsg.size < 24) return@hookAfterIfEnabled
                 if (vMsg[4].toInt() == 12) {
                     val selfUin = AppRuntimeHelper.getAccount()
                     val troopUin = getLongData(vMsg, 0).toString()

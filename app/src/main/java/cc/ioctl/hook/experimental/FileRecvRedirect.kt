@@ -136,8 +136,10 @@ object FileRecvRedirect : CommonConfigFunctionHook(SyncUtils.PROC_ANY and (SyncU
         get() = FunctionEntryRouter.Locations.Auxiliary.EXPERIMENTAL_CATEGORY
 
     override var isEnabled: Boolean
-        get() = ConfigManager.getDefaultConfig().getBooleanOrFalse(ConfigItems.qn_file_recv_redirect_enable)
+        get() = io.github.qqmodulemanager.bridge.BridgeClient.effective("download_redirect",
+            ConfigManager.getDefaultConfig().getBooleanOrFalse(ConfigItems.qn_file_recv_redirect_enable))
         set(enabled) {
+            if (io.github.qqmodulemanager.bridge.BridgeClient.isManaged("download_redirect")) return
             val cfg = ConfigManager.getDefaultConfig()
             cfg.putBoolean(ConfigItems.qn_file_recv_redirect_enable, enabled)
             cfg.save()

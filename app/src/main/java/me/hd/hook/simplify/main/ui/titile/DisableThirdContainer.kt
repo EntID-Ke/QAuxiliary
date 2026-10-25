@@ -39,7 +39,7 @@ object DisableThirdContainer : CommonSwitchFunctionHook() {
     override val name = "屏蔽悬浮广告"
     override val description = "屏蔽消息页右上角 24年08月 开学季悬浮广告"
     override val uiItemLocation = FunctionEntryRouter.Locations.Simplify.MAIN_UI_TITLE
-    override val isAvailable = requireMinQQVersion(QQVersion.QQ_8_9_88)
+    override val isAvailable = requireMinQQVersion(QQVersion.QQ_8_9_88) && !requireMinQQVersion(QQVersion.QQ_9_3_75)
 
     override fun initOnce(): Boolean {
         when {

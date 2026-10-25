@@ -22,12 +22,15 @@
 
 package me.hd.hook
 
+import android.app.Activity
+import cc.ioctl.util.Reflex
 import cc.ioctl.util.hookBeforeIfEnabled
 import io.github.qauxv.base.annotation.FunctionHookEntry
 import io.github.qauxv.base.annotation.UiItemAgentEntry
 import io.github.qauxv.dsl.FunctionEntryRouter
 import io.github.qauxv.hook.CommonSwitchFunctionHook
 import io.github.qauxv.util.QQVersion
+import io.github.qauxv.util.Initiator
 import io.github.qauxv.util.Toasts
 import io.github.qauxv.util.dexkit.DexKit
 import io.github.qauxv.util.dexkit.Hd_DisableGrowHalfLayer_Method1
@@ -38,7 +41,7 @@ import io.github.qauxv.util.xpcompat.XposedBridge
 @FunctionHookEntry
 @UiItemAgentEntry
 object DisableGrowHalfLayer : CommonSwitchFunctionHook(
-    targets = arrayOf(
+    targets = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) arrayOf(Hd_DisableGrowHalfLayer_Method2) else arrayOf(
         Hd_DisableGrowHalfLayer_Method1,
         Hd_DisableGrowHalfLayer_Method2,
     )
@@ -49,7 +52,11 @@ object DisableGrowHalfLayer : CommonSwitchFunctionHook(
     override val isAvailable = requireMinQQVersion(QQVersion.QQ_8_9_88)
 
     override fun initOnce(): Boolean {
-        hookBeforeIfEnabled(DexKit.requireMethodFromCache(Hd_DisableGrowHalfLayer_Method1)) { param ->
+        val growMethod = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            Reflex.findSingleMethod(Initiator.loadClass("cooperation.vip.ad.GrowHalfLayerHelper"), Void.TYPE, false,
+                Activity::class.java, Initiator.loadClass("cooperation.vip.ad.GrowHalfLayerInfo"), Boolean::class.java)
+        } else DexKit.requireMethodFromCache(Hd_DisableGrowHalfLayer_Method1)
+        hookBeforeIfEnabled(growMethod) { param ->
             printStackTrace("屏蔽广告弹窗 -> 测试1")
             Toasts.show("屏蔽广告弹窗 -> 测试1成功")
             param.result = null

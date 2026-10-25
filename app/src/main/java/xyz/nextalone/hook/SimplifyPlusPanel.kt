@@ -46,7 +46,8 @@ import xyz.nextalone.util.hookAfter
 
 @FunctionHookEntry
 @UiItemAgentEntry
-object SimplifyPlusPanel : MultiItemDelayableHook("na_simplify_plus_panel_multi", arrayOf(PlusPanel_PanelAdapter)) {
+object SimplifyPlusPanel : MultiItemDelayableHook("na_simplify_plus_panel_multi",
+    if (requireMinQQVersion(QQVersion.QQ_9_3_75)) emptyArray() else arrayOf(PlusPanel_PanelAdapter)) {
 
     override val preferenceTitle = "精简加号菜单"
     override val extraSearchKeywords: Array<String> = arrayOf("+号菜单")
@@ -140,7 +141,10 @@ object SimplifyPlusPanel : MultiItemDelayableHook("na_simplify_plus_panel_multi"
             targetMethods[1]!!.hookBefore(this, callback)
         } else {
             // assert QQ.version <= QQVersion.QQ_8_4_8
-            if (requireMinQQVersion(QQVersion.QQ_9_0_55)) {
+            if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+                Initiator.loadClass("com.tencent.qqnt.pluspanel.adapter.c").getDeclaredMethod("h", ArrayList::class.java)
+                    .hookBefore(this, callback)
+            } else if (requireMinQQVersion(QQVersion.QQ_9_0_55)) {
                 DexKit.requireClassFromCache(PlusPanel_PanelAdapter).declaredMethods.single { it.paramCount == 1 && it.parameterTypes[0] == ArrayList::class.java }
                     .hookBefore(
                         this,

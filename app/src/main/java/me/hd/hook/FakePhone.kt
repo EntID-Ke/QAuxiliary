@@ -39,6 +39,7 @@ import io.github.qauxv.dsl.FunctionEntryRouter
 import io.github.qauxv.dsl.uiClickableItem
 import io.github.qauxv.hook.BaseFunctionHook
 import io.github.qauxv.util.QQVersion
+import io.github.qauxv.util.Initiator
 import io.github.qauxv.util.dexkit.DexKit
 import io.github.qauxv.util.dexkit.Hd_FakePhone_Method
 import io.github.qauxv.util.requireMinQQVersion
@@ -50,7 +51,7 @@ import me.ketal.util.ignoreResult
 @UiItemAgentEntry
 object FakePhone : BaseFunctionHook(
     hookKey = "hd_FakePhone",
-    targets = arrayOf(Hd_FakePhone_Method)
+    targets = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) emptyArray() else arrayOf(Hd_FakePhone_Method)
 ) {
     private val phoneKey = ConfigData<String>("hd_FakePhone_phone")
     private var phone: String
@@ -98,12 +99,19 @@ object FakePhone : BaseFunctionHook(
     }
 
     override fun initOnce(): Boolean {
-        val onUpdateMethod = DexKit.requireMethodFromCache(Hd_FakePhone_Method)
+        val onUpdateMethod = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            Initiator.loadClass("com.tencent.mobileqq.app.dm").getDeclaredMethod("onUpdate", Int::class.java, Boolean::class.java, Any::class.java)
+        } else DexKit.requireMethodFromCache(Hd_FakePhone_Method)
         hookBeforeIfEnabled(onUpdateMethod) { param ->
             if (param.args[0] == 5) {
                 (param.args[2])?.let { obj ->
                     val bundle = obj as Bundle
                     bundle.putString("phone", phone)
+                    if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+                        bundle.getParcelableArray("phone_info")?.filterIsInstance<Bundle>()?.forEach {
+                            it.putString("phone", phone)
+                        }
+                    }
                     param.args[2] = bundle
                 }
             }

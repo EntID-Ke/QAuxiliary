@@ -35,6 +35,7 @@ import io.github.qauxv.util.Log;
 import io.github.qauxv.util.dexkit.DexKit;
 import io.github.qauxv.util.dexkit.DexKitTarget;
 import io.github.qauxv.util.dexkit.NT_SysAndEmojiResInfo;
+import io.github.qauxv.util.QQVersion;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -49,7 +50,8 @@ public class ShowHideEmo extends CommonSwitchFunctionHook {
     public static final ShowHideEmo INSTANCE = new ShowHideEmo();
 
     private ShowHideEmo() {
-        super(new DexKitTarget[]{NT_SysAndEmojiResInfo.INSTANCE});
+        super(HostInfo.requireMinQQVersion(QQVersion.QQ_9_3_75)
+                ? new DexKitTarget[0] : new DexKitTarget[]{NT_SysAndEmojiResInfo.INSTANCE});
     }
 
     @NonNull
@@ -66,6 +68,13 @@ public class ShowHideEmo extends CommonSwitchFunctionHook {
 
     @Override
     protected boolean initOnce() throws Exception {
+        if (HostInfo.requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            HookUtils.hookBeforeIfEnabled(this,
+                    Initiator.loadClass("com.tencent.mobileqq.emoticon.QQSysAndEmojiResInfo")
+                            .getDeclaredMethod("isEmoticonHide", Initiator.loadClass("com.tencent.mobileqq.emoticon.QQSysAndEmojiResInfo$QQEmoConfigItem")),
+                    param -> param.setResult(false));
+            return true;
+        }
         if (QAppUtils.isQQnt()) {
             Method[] ms = DexKit.requireClassFromCache(NT_SysAndEmojiResInfo.INSTANCE).getDeclaredMethods();
             for (Method m : ms) {

@@ -87,7 +87,7 @@ object FavEmoticonSortBy : CommonConfigFunctionHook("FavEmoticonSortBy", arrayOf
         valueState.update { state.text() }
     }
     override var isEnabled
-        get() = this.state != SortOptions.None
+        get() = io.github.qqmodulemanager.bridge.BridgeClient.effective("emoticon_sort", this.state != SortOptions.None)
         set(value) {
             throw UnsupportedOperationException()
         }

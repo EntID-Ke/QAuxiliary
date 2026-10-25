@@ -180,7 +180,7 @@ public class BaseApk extends CommonConfigFunctionHook {
 
     @Override
     public boolean isEnabled() {
-        return RikkaBaseApkFormatDialog.IsEnabled();
+        return io.github.qqmodulemanager.bridge.BridgeClient.effective("apk_rename", RikkaBaseApkFormatDialog.IsEnabled());
     }
 
     @Override

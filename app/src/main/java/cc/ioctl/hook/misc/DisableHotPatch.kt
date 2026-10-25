@@ -53,9 +53,10 @@ object DisableHotPatch : CommonSwitchFunctionHook(
 
     override var isEnabled: Boolean
         get() {
-            return configFile.exists()
+            return io.github.qqmodulemanager.bridge.BridgeClient.effective("hot_patch", configFile.exists())
         }
         set(value) {
+            if (io.github.qqmodulemanager.bridge.BridgeClient.isManaged("hot_patch")) return
             val current = isEnabled
             if (value == current) {
                 return

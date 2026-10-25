@@ -117,7 +117,7 @@ class FuncStatListFragment : BaseRootLayoutFragment() {
             val reportError = item is IDynamicHook && item.isInitialized && !item.isInitializationSuccessful
             val errorCount = if (item is RuntimeErrorTracer) collectFunctionErrors(item).size else 0
             val unsupported = item is IDynamicHook && !item.isAvailable
-            val isDepError = item is IDynamicHook && (item.isEnabled && item.isPreparationRequired)
+            val isDepError = item is IDynamicHook && item.isAvailable && item.isEnabled && item.isPreparationRequired
             if (reportError) {
                 iconType = 5
                 tags.add("存在错误")
@@ -242,7 +242,7 @@ class FuncStatListFragment : BaseRootLayoutFragment() {
         // report error +70
         val reportError = item is IDynamicHook && item.isInitialized && !item.isInitializationSuccessful
         // dep error +60
-        val isDepError = item is IDynamicHook && (item.isEnabled && item.isPreparationRequired)
+        val isDepError = item is IDynamicHook && item.isAvailable && item.isEnabled && item.isPreparationRequired
         val errorCount = if (item is RuntimeErrorTracer) collectFunctionErrors(item).size else 0
         // a error is 10, max is 50
         val errorRank = (errorCount * 10).coerceAtMost(50)

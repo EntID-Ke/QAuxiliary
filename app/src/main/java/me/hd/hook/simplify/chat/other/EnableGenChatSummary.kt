@@ -37,7 +37,7 @@ import me.hd.util.toHostClass
 @FunctionHookEntry
 @UiItemAgentEntry
 object EnableGenChatSummary : CommonSwitchFunctionHook(
-    targets = arrayOf(Hd_EnableGenChatSummary_Class)
+    targets = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) emptyArray() else arrayOf(Hd_EnableGenChatSummary_Class)
 ) {
     override val name = "启用聊天总结"
     override val description = "当未读消息不多时, 仍然强制启用 '立即总结' 按钮"
@@ -45,6 +45,16 @@ object EnableGenChatSummary : CommonSwitchFunctionHook(
     override val isAvailable = requireMinQQVersion(QQVersion.QQ_9_2_35)
 
     override fun initOnce(): Boolean {
+        if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            "chat_summary.compose.SummaryGenGuideViewKt\$SummaryGenGuideView\$3\$2\$1\$2".toHostClass()
+                .singleConstructor {
+                    parameters(Boolean::class.java, Int::class.java, "chat_summary.data.ChatSummaryBaseVM".toHostClass(),
+                        "androidx.compose.runtime.MutableState".toHostClass(), "androidx.compose.runtime.MutableState".toHostClass())
+                }.hookBeforeIfEnabled(this) { param ->
+                    param.args[0] = true
+                }
+            return true
+        }
         Hd_EnableGenChatSummary_Class.toHostClass()
             .singleConstructor {
                 parameters(null, Boolean::class.java, null, null, null)

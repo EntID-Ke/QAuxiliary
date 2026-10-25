@@ -66,19 +66,22 @@ object TroopFileRename : PluginDelayableHook("ketal_TroopFileRename"), View.OnCl
     override val isAvailable = requireMinQQVersion(QQVersion.QQ_8_6_0)
 
     override fun startHook(classLoader: ClassLoader) = throwOrTrue {
-        val builderClzName = if (requireMinQQVersion(QQVersion.QQ_9_1_5_BETA_20015)) "j"
+        val builderClzName = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) "l"
+        else if (requireMinQQVersion(QQVersion.QQ_9_1_5_BETA_20015)) "j"
         else if (requireMinQQVersion(QQVersion.QQ_9_0_20)) "i"
         else if (requireMinQQVersion(QQVersion.QQ_8_9_88)) "h"
         else if (requireMinQQVersion(QQVersion.QQ_8_9_0)) "g"
         else "TroopFileItemBuilder"
         val builder = ("com.tencent.mobileqq.troop.widget.$builderClzName").findClass(classLoader)
-        builder.declaredMethods.find {
+        builder.declaredMethods.single {
             val args = it.parameterTypes
-            it.returnType == Void.TYPE && args[1].equals(View::class.java)
-        }?.hookBefore(this) {
+            it.returnType == Void.TYPE && args.size >= 3 && args[0] == Context::class.java && args[1] == View::class.java
+        }.hookBefore(this) {
             val ctx = it.args[0]
-            val obj = it.args[2] as Array<*>
-            val booleans = obj[0] as BooleanArray
+            val obj = it.args[2] as? Array<*> ?: return@hookBefore
+            if (obj.size != 2) return@hookBefore
+            val booleans = obj[0] as? BooleanArray ?: return@hookBefore
+            if (booleans.size < 2) return@hookBefore
             val fileInfo = TroopFileInfo(obj[1]!!)
             val uploader = fileInfo.uploader
             val gid = ctx.findFieldObjectAs<String> {
@@ -105,9 +108,10 @@ object TroopFileRename : PluginDelayableHook("ketal_TroopFileRename"), View.OnCl
         val updateRightMenuItem =
             "Lcom/tencent/mobileqq/troop/widget/$clazzName;->updateRightMenuItem(ILjava/lang/Object;Lcom/tencent/widget/SwipRightMenuBuilder\$SwipRightMenuItem;Landroid/view/View\$OnClickListener;)Landroid/view/View;".method
         updateRightMenuItem.hookAfter(this) {
-            val obj = it.args[1] as Array<*>
+            val obj = it.args[1] as? Array<*> ?: return@hookAfter
+            if (obj.size != 2 || obj[1] == null) return@hookAfter
+            val textview = it.result as? View ?: return@hookAfter
             val info = TroopFileInfo(obj[1]!!)
-            val textview = it.result as View
             if ("重命名" != textview.invokeMethodAs<String>("getText")) return@hookAfter
             textview.setBackgroundColor("#2498F6".toColorInt())
             if (info.size > 0) {

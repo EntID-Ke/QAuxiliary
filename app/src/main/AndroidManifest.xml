@@ -46,6 +46,7 @@
         android:useEmbeddedDex="false"
         android:enableOnBackInvokedCallback="true"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning,UnusedAttribute">
+        <meta-data android:name="io.github.qqmodulemanager.bridgeVersion" android:value="2" />
         <activity
             android:exported="true"
             android:icon="@drawable/icon"

@@ -46,13 +46,18 @@ object HandleClickPrivateBotRecMsgSend : CommonSwitchFunctionHook() {
     override val isAvailable = requireMinQQVersion(QQVersion.QQ_8_9_88)
 
     override fun initOnce(): Boolean {
-        "Lcom/tencent/mobileqq/aio/msglist/holder/component/msgaction/AIOMsgRecommendComponent\$b;->onClick(Landroid/view/View;)V".method.hookBefore { param ->
+        val descriptor = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            "Lcom/tencent/mobileqq/aio/msglist/holder/component/msgaction/AIOMsgRecommendComponent;->g2(Lcom/tencent/mobileqq/aio/msglist/holder/component/msgaction/AIOMsgRecommendComponent;Lcom/tencent/qqnt/kernel/nativeinterface/InlineKeyboardButton;ILandroid/view/View;)V"
+        } else "Lcom/tencent/mobileqq/aio/msglist/holder/component/msgaction/AIOMsgRecommendComponent\$b;->onClick(Landroid/view/View;)V"
+        descriptor.method.hookBefore { param ->
+            if (!isEnabled) return@hookBefore
             param.result = null
             val activity = ContextUtils.getCurrentActivity()
             val context = CommonContextWrapper.createMaterialDesignContext(activity)
             MaterialDialog(context).show {
                 title(text = "是否发送内容")
-                message(text = param.thisObject.findFieldObjectAs<InlineKeyboardButton> { type == InlineKeyboardButton::class.java }.label)
+                message(text = (if (requireMinQQVersion(QQVersion.QQ_9_3_75)) param.args[1] as InlineKeyboardButton
+                    else param.thisObject.findFieldObjectAs<InlineKeyboardButton> { type == InlineKeyboardButton::class.java }).label)
                 positiveButton(text = "是") {
                     XposedBridge.invokeOriginalMethod(param.method, param.thisObject, param.args)
                 }

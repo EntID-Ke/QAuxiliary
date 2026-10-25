@@ -85,6 +85,8 @@ object RegexAntiMeg : CommonConfigFunctionHook(), MessageReceiver {
         }
     }
 
+    override val isAvailable: Boolean get() = MessageInterception.isAvailable
+
     override fun initOnce(): Boolean {
         return MessageInterception.initialize()
     }

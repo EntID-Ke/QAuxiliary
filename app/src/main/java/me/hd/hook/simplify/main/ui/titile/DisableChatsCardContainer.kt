@@ -45,7 +45,11 @@ object DisableChatsCardContainer : CommonSwitchFunctionHook() {
     override fun initOnce(): Boolean {
         "com.tencent.mobileqq.chatlist.MainChatsCardContainerPartImpl".toHostClass()
             .singleMethod {
-                parameters(Context::class.java, Boolean::class.java)
+                if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+                    parameters("com.tencent.mobileqq.chatlist.MainChatsCardContainerPartImpl".toHostClass(), Context::class.java, Boolean::class.java)
+                } else {
+                    parameters(Context::class.java, Boolean::class.java)
+                }
             }.hookBeforeIfEnabled(this) { param ->
                 param.result = null
             }

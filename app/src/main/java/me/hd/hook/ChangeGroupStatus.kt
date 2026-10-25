@@ -28,6 +28,7 @@ import io.github.qauxv.base.annotation.UiItemAgentEntry
 import io.github.qauxv.dsl.FunctionEntryRouter
 import io.github.qauxv.hook.CommonSwitchFunctionHook
 import io.github.qauxv.util.QQVersion
+import cc.ioctl.util.hookBeforeIfEnabled
 import io.github.qauxv.util.requireMinQQVersion
 import io.github.qauxv.util.xpcompat.XposedHelpers
 import xyz.nextalone.util.clazz
@@ -46,6 +47,13 @@ object ChangeGroupStatus : CommonSwitchFunctionHook() {
     override val isAvailable = requireMinQQVersion(QQVersion.QQ_8_9_88)
 
     override fun initOnce(): Boolean {
+        if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            hookBeforeIfEnabled("Lcom/tencent/mobileqq/aio/input/joinstate/c\$a;->a()Z".method) { it.result = true }
+            hookBeforeIfEnabled("Lcom/tencent/mobileqq/aio/input/blockstate/f\$a;->a()Z".method) { it.result = false }
+            hookBeforeIfEnabled("Lcom/tencent/mobileqq/data/troop/TroopInfo;->isUnreadableBlock()Z".method) { it.result = false }
+            hookBeforeIfEnabled("Lcom/tencent/qqnt/troop/TroopListRepo;->isExit(Ljava/lang/String;Ljava/lang/String;Z)Z".method) { it.result = false }
+            return true
+        }
         if (requireMinQQVersion(QQVersion.QQ_9_1_50)) {
             if (requireMinQQVersion(QQVersion.QQ_9_1_70)) {
                 "Lcom/tencent/mobileqq/aio/input/reply/i;->l()Z".method.hookBefore {

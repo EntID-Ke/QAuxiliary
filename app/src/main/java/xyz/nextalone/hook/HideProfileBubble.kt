@@ -48,5 +48,6 @@ object HideProfileBubble : CommonSwitchFunctionHook(arrayOf(NQQSettingMe_updateP
     }
 
     override val isAvailable: Boolean
-        get() = requireMinQQVersion(QQVersion.QQ_8_3_6) or requireMinPlayQQVersion(PlayQQ_8_2_9)
+        get() = (requireMinQQVersion(QQVersion.QQ_8_3_6) or requireMinPlayQQVersion(PlayQQ_8_2_9)) &&
+            !requireMinQQVersion(QQVersion.QQ_9_3_75)
 }

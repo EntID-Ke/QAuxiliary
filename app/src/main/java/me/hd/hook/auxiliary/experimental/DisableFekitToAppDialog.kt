@@ -27,6 +27,7 @@ import io.github.qauxv.base.annotation.UiItemAgentEntry
 import io.github.qauxv.dsl.FunctionEntryRouter
 import io.github.qauxv.hook.CommonSwitchFunctionHook
 import io.github.qauxv.util.QQVersion
+import io.github.qauxv.util.Initiator
 import io.github.qauxv.util.dexkit.Hd_DisableFekitToAppDialog_Method
 import io.github.qauxv.util.requireMinQQVersion
 import me.hd.util.hookBeforeIfEnabled
@@ -35,7 +36,7 @@ import me.hd.util.toHostMethod
 @FunctionHookEntry
 @UiItemAgentEntry
 object DisableFekitToAppDialog : CommonSwitchFunctionHook(
-    targets = arrayOf(Hd_DisableFekitToAppDialog_Method)
+    targets = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) emptyArray() else arrayOf(Hd_DisableFekitToAppDialog_Method)
 ) {
     override val name = "屏蔽社交功能限制提醒"
     override val description = "屏蔽每次打开QQ弹出提醒对话框"
@@ -43,7 +44,9 @@ object DisableFekitToAppDialog : CommonSwitchFunctionHook(
     override val isAvailable = requireMinQQVersion(QQVersion.QQ_9_0_0)
 
     override fun initOnce(): Boolean {
-        Hd_DisableFekitToAppDialog_Method.toHostMethod()
+        (if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            Initiator.loadClass("com.tencent.mobileqq.dt.model.d").getDeclaredMethod("b", String::class.java, ByteArray::class.java)
+        } else Hd_DisableFekitToAppDialog_Method.toHostMethod())
             .hookBeforeIfEnabled(this) { param ->
                 val string = param.args[0] as String
                 if ("socialError" == string) {

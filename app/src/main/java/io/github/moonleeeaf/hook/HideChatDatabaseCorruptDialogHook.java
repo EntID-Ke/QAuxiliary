@@ -26,11 +26,13 @@ import android.app.Activity;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import cc.ioctl.util.HookUtils;
+import cc.ioctl.util.HostInfo;
 import io.github.qauxv.base.annotation.FunctionHookEntry;
 import io.github.qauxv.base.annotation.UiItemAgentEntry;
 import io.github.qauxv.dsl.FunctionEntryRouter;
 import io.github.qauxv.hook.CommonSwitchFunctionHook;
 import io.github.qauxv.util.Initiator;
+import io.github.qauxv.util.QQVersion;
 import java.lang.reflect.Method;
 
 @FunctionHookEntry
@@ -71,7 +73,7 @@ public class HideChatDatabaseCorruptDialogHook extends CommonSwitchFunctionHook 
         // 7f113d58
         // Lcom/tencent/mobileqq/database/corrupt/DBFixDialogUI;->v(I)V
         Method mMethod = Initiator.loadClass("com.tencent.mobileqq.database.corrupt.DBFixDialogUI")
-                .getDeclaredMethod("v", int.class);
+                .getDeclaredMethod(HostInfo.requireMinQQVersion(QQVersion.QQ_9_3_75) ? "t" : "v", int.class);
 
         HookUtils.hookBeforeIfEnabled(this, mMethod, (param) -> {
             param.setResult(null);

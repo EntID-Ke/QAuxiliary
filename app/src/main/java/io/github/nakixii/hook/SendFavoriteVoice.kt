@@ -28,6 +28,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import android.view.View
 import android.widget.BaseAdapter
 import android.widget.CheckBox
 import android.widget.FrameLayout
@@ -130,9 +131,11 @@ object SendFavoriteVoice : PluginDelayableHook("send_favorite_voice") {
         }
 
         val audioItemViewHolder = "com.qqfav.activity.AudioItemViewHolder".findClass(classLoader)
-        val checkBox = audioItemViewHolder.getFieldByType(CheckBox::class.java).apply { isAccessible = true }
+        val isNewHolder = requireMinQQVersion(QQVersion.QQ_9_3_75)
+        val checkBox = if (isNewHolder) null else audioItemViewHolder.getFieldByType(CheckBox::class.java).apply { isAccessible = true }
+        val rootView = if (isNewHolder) audioItemViewHolder.superclass.getDeclaredField("m").apply { isAccessible = true } else null
         val itemViewFactoryIVH = audioItemViewHolder.superclass.declaredFields
-            .first { it.type.name.contains("com.qqfav.activity") }.apply { isAccessible = true }
+            .first { if (isNewHolder) it.type == itemViewFactoryFLA.type else it.type.name.contains("com.qqfav.activity") }.apply { isAccessible = true }
 
         val favoriteData = audioItemViewHolder.getFieldByType(
             "com.qqfav.data.FavoriteData"
@@ -140,8 +143,8 @@ object SendFavoriteVoice : PluginDelayableHook("send_favorite_voice") {
         ).apply { isAccessible = true }
         val getFavId = favoriteData.type.getMethod("getId").apply { isAccessible = true }
         val baseActivity = audioItemViewHolder.getFieldByType(
-            "mqq.app.BaseActivity"
-                .findClass(Initiator.getHostClassLoader())
+            (if (isNewHolder) "com.qqfav.activity.QfavBaseActivity" else "mqq.app.BaseActivity")
+                .findClass(if (isNewHolder) classLoader else Initiator.getHostClassLoader())
         ).apply { isAccessible = true }
 
         // 搜索结果列表
@@ -150,7 +153,10 @@ object SendFavoriteVoice : PluginDelayableHook("send_favorite_voice") {
             if (it.args[0] !is FrameLayout) return@hookBefore
 
             // 绕过收藏列表，否则无法多选发送；收藏列表的语音在上面处理
-            val checkBoxObj = checkBox.get(it.thisObject) as CheckBox
+            val checkBoxObj = if (isNewHolder) {
+                val root = rootView!!.get(it.thisObject) as View
+                root.findViewById<CheckBox>(root.resources.getIdentifier("c3h", "id", root.context.packageName)) ?: return@hookBefore
+            } else checkBox!!.get(it.thisObject) as CheckBox
             if (checkBoxObj.isVisible) return@hookBefore
 
             val itemViewFactory = itemViewFactoryIVH.get(it.thisObject)

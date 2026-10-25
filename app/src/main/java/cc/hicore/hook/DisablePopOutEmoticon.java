@@ -30,6 +30,8 @@ import io.github.qauxv.base.annotation.UiItemAgentEntry;
 import io.github.qauxv.dsl.FunctionEntryRouter;
 import io.github.qauxv.hook.CommonSwitchFunctionHook;
 import io.github.qauxv.util.Initiator;
+import cc.ioctl.util.HostInfo;
+import io.github.qauxv.util.QQVersion;
 import io.github.qauxv.util.dexkit.CPopOutEmoticonUtil;
 import io.github.qauxv.util.dexkit.DexKit;
 import io.github.qauxv.util.dexkit.DexKitTarget;
@@ -42,7 +44,8 @@ public class DisablePopOutEmoticon extends CommonSwitchFunctionHook {
     public static final DisablePopOutEmoticon INSTANCE = new DisablePopOutEmoticon();
 
     private DisablePopOutEmoticon() {
-        super(new DexKitTarget[]{CPopOutEmoticonUtil.INSTANCE});
+        super(HostInfo.requireMinQQVersion(QQVersion.QQ_9_3_75)
+                ? new DexKitTarget[0] : new DexKitTarget[]{CPopOutEmoticonUtil.INSTANCE});
     }
 
     @NonNull
@@ -65,6 +68,12 @@ public class DisablePopOutEmoticon extends CommonSwitchFunctionHook {
 
     @Override
     protected boolean initOnce() throws Exception {
+        if (HostInfo.requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            Class<?> helper = Initiator.loadClass("com.tencent.mobileqq.emoticonview.QQEmoticonPanelLinearLayoutHelper");
+            // The eligibility check is inlined into CheckForLongPress.run. This accessor is used only by that check.
+            HookUtils.hookBeforeIfEnabled(this, helper.getDeclaredMethod("k", helper), param -> param.setResult(-1));
+            return true;
+        }
         HookUtils.hookBeforeIfEnabled(this,
                 Reflex.findSingleMethod(Objects.requireNonNull(DexKit.loadClassFromCache(CPopOutEmoticonUtil.INSTANCE), "C_PopOutEmoticonUtil"),
                         boolean.class, false,

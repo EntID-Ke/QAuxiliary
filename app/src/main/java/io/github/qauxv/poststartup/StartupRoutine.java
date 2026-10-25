@@ -76,7 +76,9 @@ public class StartupRoutine {
             Log.w("HookBridge is null, fallback to embedded LSPlant.");
             LsplantHookImpl.initializeLsplantHookBridge();
         }
+        io.github.qauxv.integration.QQModuleManagerAdapter.register(ctx);
         MainHook.getInstance().performHook(ctx, step);
+        io.github.qqmodulemanager.bridge.BridgeClient.ready();
     }
 
     private static void overrideLSPatchModifiedVersionCodeIfNecessary(Context ctx) {

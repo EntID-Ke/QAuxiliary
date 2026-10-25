@@ -29,6 +29,8 @@ import io.github.qauxv.base.annotation.UiItemAgentEntry
 import io.github.qauxv.dsl.FunctionEntryRouter
 import io.github.qauxv.hook.CommonSwitchFunctionHook
 import io.github.qauxv.util.Initiator
+import io.github.qauxv.util.QQVersion
+import io.github.qauxv.util.requireMinQQVersion
 
 @FunctionHookEntry
 @UiItemAgentEntry
@@ -41,6 +43,19 @@ object HideGroupAssistantBanner : CommonSwitchFunctionHook() {
     override val uiItemLocation = FunctionEntryRouter.Locations.Simplify.CHAT_GROUP_OTHER
 
     override fun initOnce(): Boolean {
+        if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            val clazz = Initiator.loadClass("com.tencent.qqnt.chats.biz.troophelper.c")
+            val banner = clazz.getDeclaredField("S").apply { isAccessible = true }
+            listOf(
+                clazz.getDeclaredMethod("d0", Initiator.loadClass("com.tencent.qqnt.chats.core.ui.ChatsListVB\$b")),
+                clazz.getDeclaredMethod("P", Initiator.loadClass("com.tencent.qqnt.chats.core.uistate.b"))
+            ).forEach { method ->
+                hookAfterIfEnabled(method) { param ->
+                    (banner.get(param.thisObject) as? View)?.visibility = View.GONE
+                }
+            }
+            return true
+        }
         val createTopBannerMethod = Initiator.loadClass("com/tencent/mobileqq/activity/home/chats/troophelper/TroopHelperFragment")
             .getDeclaredMethod("createTopBanner")
         hookAfterIfEnabled(createTopBannerMethod) { param ->

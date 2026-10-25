@@ -121,7 +121,7 @@ object CustomMenu {
             .load(getOrCreateInjectionClassLoader(absMenuItem.classLoader!!), strategy)
             .loaded
         return menuItemClass.getDeclaredConstructor(msgClass)
-            .newInstance(msg)
+            .newInstance(msg).also { io.github.qqmodulemanager.bridge.BridgeClient.tagResourceItem(it, "qauxv", io.github.qauxv.R.id::class.java, id, text) }
     }
 
     /**
@@ -147,7 +147,9 @@ object CustomMenu {
             .make()
             .load(getOrCreateInjectionClassLoader(absMenuItem.classLoader!!), strategy)
             .loaded
-        return menuItemClass.getDeclaredConstructor(msgClass).newInstance(msg)
+        return menuItemClass.getDeclaredConstructor(msgClass).newInstance(msg).also {
+            io.github.qqmodulemanager.bridge.BridgeClient.tagResourceItem(it, "qauxv", io.github.qauxv.R.id::class.java, id, text)
+        }
     }
 
     fun checkArrayElementNonNull(array: Array<Any?>?) {

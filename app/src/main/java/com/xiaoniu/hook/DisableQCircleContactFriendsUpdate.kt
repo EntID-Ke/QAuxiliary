@@ -42,7 +42,10 @@ object DisableQCircleContactFriendsUpdate : CommonSwitchFunctionHook() {
     override val uiItemLocation = FunctionEntryRouter.Locations.Simplify.MAIN_UI_CONTACT
 
     override fun initOnce() = throwOrTrue {
-        "Lcom/tencent/mobileqq/qcircle/api/impl/QCircleContactExpandBannerApiImpl;->isEnable()Z".method.hookReturnConstant(false)
+        val descriptor = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            "Lcom/tencent/mobileqq/friend/contact/api/impl/ContactExpandBannerApiImpl;->isEnable()Z"
+        } else "Lcom/tencent/mobileqq/qcircle/api/impl/QCircleContactExpandBannerApiImpl;->isEnable()Z"
+        descriptor.method.hookReturnConstant(false)
     }
 
 }

@@ -41,6 +41,8 @@ object AntiRobotMessage : CommonSwitchFunctionHook("ll_anti_robot_message"), Mes
     override val name: String
         get() = "自动已读群机器人消息"
 
+    override val isAvailable: Boolean get() = MessageInterception.isAvailable
+
     override fun initOnce(): Boolean {
         return MessageInterception.initialize()
     }

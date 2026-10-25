@@ -88,6 +88,7 @@ object SimplifyChatLongItem : MultiItemDelayableHook("na_simplify_chat_long_item
             }.firstNotNullOf { it.clazz }
                 .method("setMenu")!!
                 .hookBefore {
+                    if (io.github.qqmodulemanager.bridge.BridgeClient.menuManaged()) return@hookBefore
                     val list = it.args[0].javaClass.getFieldByType(List::class.java).get(it.args[0]) as MutableList<*>
                     if (list.isEmpty()) return@hookBefore
                     if (getName == null) {

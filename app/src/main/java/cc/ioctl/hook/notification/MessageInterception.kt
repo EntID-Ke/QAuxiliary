@@ -53,6 +53,9 @@ object MessageInterception : BaseHookDispatcher<MessageReceiver>(arrayOf()) {
         AntiRobotMessage,
     )
 
+    // The MessageRecord receive path has been removed from C2CMessageManager.
+    override val isAvailable = !requireMinQQVersion(QQVersion.QQ_9_3_75)
+
     override fun initOnce() = throwOrTrue {
         val callback: (XC_MethodHook.MethodHookParam) -> Unit = { param ->
             val msgRecordData = MsgRecordData(param.args[0])

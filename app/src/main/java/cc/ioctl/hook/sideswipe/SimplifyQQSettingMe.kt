@@ -69,7 +69,7 @@ import io.github.qauxv.util.requireRangePlayQQVersion
 object SimplifyQQSettingMe :
     MultiItemDelayableHook(
         "SimplifyQQSettingMe",
-        targets = arrayOf(
+        targets = if (requireMinQQVersion(QQ_9_3_75)) emptyArray() else arrayOf(
             QQ_SETTING_ME_CONFIG_CLASS,
             QQSettingMeABTestHelper_isZPlanExpGroup_New,
             QQSettingMeABTestHelper_isZplanExpGroup_Old,
@@ -167,6 +167,19 @@ object SimplifyQQSettingMe :
 
     @Throws(Exception::class)
     override fun initOnce() = throwOrTrue {
+
+        if (requireMinQQVersion(QQ_9_3_75)) {
+            Initiator.loadClass("com.tencent.mobileqq.parts.QQSettingMeMenuPanelPartV3")
+                .getDeclaredMethod("da", List::class.java).hookBefore(this) { param ->
+                    val hidden = activeItems.mapNotNull { items2Hide[it] }.toSet()
+                    param.args[0] = (param.args[0] as List<*>).mapNotNull { row ->
+                        (row as List<*>).filter { bean ->
+                            bean!!.javaClass.getMethod("n").invoke(bean) !in hidden
+                        }.takeIf { it.isNotEmpty() }
+                    }
+                }
+            return@throwOrTrue
+        }
 
         val kQQSettingMeView = Initiator.loadClass(
             if (requireMinQQVersion(QQVersion.QQ_8_9_90)) "com.tencent.mobileqq.QQSettingMeView"

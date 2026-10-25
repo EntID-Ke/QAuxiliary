@@ -43,7 +43,7 @@ object HideJoinTroopBriefContent : CommonSwitchFunctionHook() {
     override val name = "隐藏进群介绍及相关效果"
     override val description = "对验证信息页下方的进群介绍布局进行隐藏"
     override val uiItemLocation = FunctionEntryRouter.Locations.Simplify.CHAT_GROUP_OTHER
-    override val isAvailable = requireMinQQVersion(QQVersion.QQ_9_0_0)
+    override val isAvailable = requireMinQQVersion(QQVersion.QQ_9_0_0) && !requireMinQQVersion(QQVersion.QQ_9_3_75)
 
     override fun initOnce(): Boolean {
         "com.tencent.mobileqq.activity.JoinTroopVerifyFragment".toHostClass()

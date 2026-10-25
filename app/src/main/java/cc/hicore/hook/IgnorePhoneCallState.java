@@ -24,12 +24,14 @@ package cc.hicore.hook;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import cc.ioctl.util.HookUtils;
+import cc.ioctl.util.HostInfo;
 import cc.ioctl.util.Reflex;
 import io.github.qauxv.base.annotation.FunctionHookEntry;
 import io.github.qauxv.base.annotation.UiItemAgentEntry;
 import io.github.qauxv.dsl.FunctionEntryRouter;
 import io.github.qauxv.hook.CommonSwitchFunctionHook;
 import io.github.qauxv.util.Initiator;
+import io.github.qauxv.util.QQVersion;
 
 @FunctionHookEntry
 @UiItemAgentEntry
@@ -54,6 +56,12 @@ public class IgnorePhoneCallState extends CommonSwitchFunctionHook {
 
     @Override
     protected boolean initOnce() throws Exception {
+        if (HostInfo.requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            HookUtils.hookBeforeIfEnabled(this,
+                    Initiator._QQAppInterface().getDeclaredMethod("isVideoChatting"),
+                    param -> param.setResult(false));
+            return true;
+        }
         HookUtils.hookBeforeIfEnabled(this,
                 Initiator.loadClass("com.tencent.mobileqq.kandian.glue.video.VideoVolumeControl")
                         .getDeclaredMethod("isInPhoneCall", Context.class),

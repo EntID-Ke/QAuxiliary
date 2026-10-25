@@ -31,6 +31,7 @@ import cc.ioctl.util.HookUtils
 import com.github.kyuubiran.ezxhelper.utils.findMethodOrNull
 import com.github.kyuubiran.ezxhelper.utils.invokeMethod
 import com.tencent.qqnt.kernel.nativeinterface.MsgRecord
+import io.github.qauxv.base.RuntimeErrorTracer
 import io.github.qauxv.base.annotation.FunctionHookEntry
 import io.github.qauxv.hook.BasePersistBackgroundHook
 import io.github.qauxv.util.Initiator
@@ -60,6 +61,14 @@ object BaseBubbleBuilderHook : BasePersistBackgroundHook() {
         MultiForwardAvatarHook
     )
 
+    override fun traceError(e: Throwable) {
+        super.traceError(e)
+        for (decorator in decorators) {
+            io.github.qqmodulemanager.bridge.BridgeClient.reportFailure(
+                io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(decorator.javaClass.name), e)
+        }
+    }
+
     @Throws(Exception::class)
     override fun initOnce(): Boolean {
         if (QAppUtils.isQQnt()) {
@@ -78,8 +87,9 @@ object BaseBubbleBuilderHook : BasePersistBackgroundHook() {
                     for (decorator in decorators) {
                         try {
                             decorator.onGetViewNt(rootView, msg, it)
-                        } catch (e: Exception) {
-                            traceError(e)
+                        } catch (e: Throwable) {
+                            if (e !is Exception && e !is LinkageError) throw e
+                            (decorator as? RuntimeErrorTracer)?.traceError(e) ?: super.traceError(e)
                         }
                     }
                 }
@@ -98,8 +108,9 @@ object BaseBubbleBuilderHook : BasePersistBackgroundHook() {
                     for (decorator in decorators) {
                         try {
                             decorator.onGetViewNt(rootView, msg, it)
-                        } catch (e: Exception) {
-                            traceError(e)
+                        } catch (e: Throwable) {
+                            if (e !is Exception && e !is LinkageError) throw e
+                            (decorator as? RuntimeErrorTracer)?.traceError(e) ?: super.traceError(e)
                         }
                     }
                 }
@@ -121,8 +132,9 @@ object BaseBubbleBuilderHook : BasePersistBackgroundHook() {
             for (decorator in decorators) {
                 try {
                     decorator.onGetView(rootView, msg, it)
-                } catch (e: Exception) {
-                    traceError(e)
+                } catch (e: Throwable) {
+                    if (e !is Exception && e !is LinkageError) throw e
+                    (decorator as? RuntimeErrorTracer)?.traceError(e) ?: super.traceError(e)
                 }
             }
         }

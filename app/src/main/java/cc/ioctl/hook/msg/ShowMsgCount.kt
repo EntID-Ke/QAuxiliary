@@ -58,7 +58,7 @@ import xyz.nextalone.util.throwOrTrue
 @FunctionHookEntry
 @UiItemAgentEntry
 object ShowMsgCount : CommonSwitchFunctionHook(
-    targets = arrayOf(
+    targets = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) emptyArray() else arrayOf(
         CCustomWidgetUtil_updateCustomNoteTxt_NT,
         AIOTitleVB_updateLeftTopBack_NT,
         NCustomWidgetUtil_updateCustomNoteTxt,
@@ -66,7 +66,8 @@ object ShowMsgCount : CommonSwitchFunctionHook(
     targetProc = SyncUtils.PROC_ANY
 ) {
 
-    override val name = "显示具体消息数量"
+    override val name get() = if (io.github.qqmodulemanager.bridge.BridgeClient.isManaged(
+        io.github.qqmodulemanager.bridge.BridgeClient.COUNT)) "显示具体消息数量（由管理器管理）" else "显示具体消息数量"
     override val description = """
         1. 群消息数量(消息列表+左上角返回)
         2. 总消息数量
@@ -140,7 +141,14 @@ object ShowMsgCount : CommonSwitchFunctionHook(
             }
         }
 
-        if (requireMinQQVersion(QQVersion.QQ_9_2_30)) {
+        if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            val method = Initiator.loadClass("com.tencent.mobileqq.activity.framebusiness.controllerinject.FrameControllerInjectImpl")
+                .getDeclaredMethod("b", Initiator.loadClass("com.tencent.mobileqq.quibadge.QUIBadge"),
+                    Int::class.java, String::class.java, Int::class.java, Int::class.java)
+            hookBeforeIfEnabled(method) { param ->
+                param.args[4] = Int.MAX_VALUE
+            }
+        } else if (requireMinQQVersion(QQVersion.QQ_9_2_30)) {
             // 总消息数量 9.2.30 ~ 9.2.55
             val clz = Initiator.loadClass("com.tencent.mobileqq.activity.framebusiness.controllerinject.FrameControllerInjectImpl")
             val method = clz.declaredMethods.single { method ->
@@ -201,11 +209,16 @@ object ShowMsgCount : CommonSwitchFunctionHook(
             Initiator.loadClass("com.tencent.qqmini.sdk.core.utils.CustomWidgetUtil")
                 .getDeclaredMethod("updateCustomNoteTxt", TextView::class.java, Int::class.java)
                 .hookAfter { param ->
+                    if (!isEnabled) return@hookAfter
                     (param.args[0] as TextView).text = "${param.args[1] as Int}"
                 }
 
             // 隐藏会话(右上角+悬浮消息列表)
             val (floatViewManagerClass, msgUnreadCallbackClass) = when {
+                requireMinQQVersion(QQVersion.QQ_9_3_75) -> Pair(
+                    "com.tencent.mobileqq.activity.miniaio.d", "com.tencent.mobileqq.activity.miniaio.c"
+                )
+
                 requireMinQQVersion(QQVersion.QQ_9_2_30) -> Pair(// 9.2.30
                     "com.tencent.mobileqq.activity.miniaio.c", "com.tencent.mobileqq.activity.miniaio.d"
                 )
@@ -234,6 +247,7 @@ object ShowMsgCount : CommonSwitchFunctionHook(
             Initiator.loadClass(floatViewManagerClass)
                 .getDeclaredMethod("updateUnreadCount", Int::class.java, Boolean::class.java)
                 .hookAfter { param ->
+                    if (!isEnabled) return@hookAfter
                     (param.thisObject.findFieldObjectAs<ViewGroup> {
                         type == View::class.java
                     }.findViewByType(TextView::class.java) as TextView).text = "${param.args[0] as Int}"
@@ -242,6 +256,7 @@ object ShowMsgCount : CommonSwitchFunctionHook(
             Initiator.loadClass(msgUnreadCallbackClass)
                 .getDeclaredMethod("updateUnreadCount", Int::class.java, Boolean::class.java)
                 .hookAfter { param ->
+                    if (!isEnabled) return@hookAfter
                     param.thisObject.findFieldObjectAs<TextView> {
                         type == TextView::class.java
                     }.text = "${param.args[0] as Int}"

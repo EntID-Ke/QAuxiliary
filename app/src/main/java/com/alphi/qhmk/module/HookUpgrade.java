@@ -36,6 +36,17 @@ public class HookUpgrade extends CommonSwitchFunctionHook {
     @Override
     protected boolean initOnce() throws Exception {
 
+        if (HostInfo.requireMinQQVersion(io.github.qauxv.util.QQVersion.QQ_9_3_75)) {
+            Class<?> shiplyManager = Initiator.loadClass("com.tencent.mobileqq.upgrade.d");
+            Method parseStrategy = shiplyManager
+                    .getDeclaredMethod("i", Initiator.loadClass("com.tencent.upgrade.bean.UpgradeStrategy"));
+            HookUtils.hookBeforeIfEnabled(this, parseStrategy, param -> param.setResult(null));
+            HookUtils.hookBeforeIfEnabled(this,
+                    shiplyManager.getDeclaredMethod("a", boolean.class, boolean.class, java.util.Map.class),
+                    param -> param.setResult(null));
+            return true;
+        }
+
         try {
             Class<?> shiplyUpgradeManagerClass = Initiator.loadClass("com.tencent.mobileqq.upgrade.a.a");
             Class<?> upgradeStrategyClass = Initiator.loadClass("com.tencent.upgrade.bean.UpgradeStrategy");

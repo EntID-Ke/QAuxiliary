@@ -72,10 +72,10 @@ import java.util.Date
 @FunctionHookEntry
 @UiItemAgentEntry
 object HandleSendChatCount : CommonConfigFunctionHook(
-    targets = arrayOf(NQQSettingMe_onResume)
+    targets = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) emptyArray() else arrayOf(NQQSettingMe_onResume)
 ) {
     override val name = "统计聊天发送消息数量"
-    override val description = "替换旧样式侧滑栏个性签名, 支持 8.9.88 及以上"
+    override val description = "替换侧滑栏个性签名, 支持 8.9.88 及以上"
     override val uiItemLocation = FunctionEntryRouter.Locations.Auxiliary.CHAT_CATEGORY
     override val isAvailable = requireMinQQVersion(QQVersion.QQ_8_9_88)
 
@@ -292,28 +292,39 @@ object HandleSendChatCount : CommonConfigFunctionHook(
     }
 
     override fun initOnce(): Boolean {
-        val settingOldStyleClass = if (requireMinQQVersion(QQVersion.QQ_9_0_0)) {
-            Initiator.loadClass("com.tencent.mobileqq.QQSettingMeView")
+        if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            val part = Initiator.loadClass("com.tencent.mobileqq.parts.QQSettingMeSignaturePartV3")
+            val field = part.getDeclaredField("d").apply { isAccessible = true }
+            part.declaredMethods.filter { it.name == "onInitView" || it.name == "onPartResume" }.forEach { method ->
+                hookAfterIfEnabled(method) { param ->
+                    val group = field.get(param.thisObject) as? ViewGroup ?: return@hookAfterIfEnabled
+                    group.post { updateView(group) }
+                }
+            }
         } else {
-            Initiator.loadClass("com.tencent.mobileqq.activity.QQSettingMeView")
-        }
-        /*
-        val settingNewStyleClass = if (requireMinQQVersion(QQVersion.QQ_9_0_0)) {
-            Initiator.loadClass("com.tencent.mobileqq.bizParts.QQSettingMeProfileCardPart")
-        } else {
-            Initiator.loadClass("com.tencent.mobileqq.activity.qqsettingme.bizParts.QQSettingMeProfileCardPart")
-        }
-        */
-        val getOldStyleViewMethod = settingOldStyleClass.declaredMethods.single { method ->
-            val params = method.parameterTypes
-            method.isStatic && method.returnType == View::class.java && params.size == 1 && params[0] == settingOldStyleClass
-        }
-        var viewGroup: ViewGroup? = null
-        hookAfterIfEnabled(getOldStyleViewMethod) { param ->
-            viewGroup = param.result as ViewGroup
-        }
-        DexKit.loadMethodFromCache(NQQSettingMe_onResume)?.hookAfter(this) {
-            viewGroup?.post { updateView(viewGroup!!) }
+            val settingOldStyleClass = if (requireMinQQVersion(QQVersion.QQ_9_0_0)) {
+                Initiator.loadClass("com.tencent.mobileqq.QQSettingMeView")
+            } else {
+                Initiator.loadClass("com.tencent.mobileqq.activity.QQSettingMeView")
+            }
+            /*
+            val settingNewStyleClass = if (requireMinQQVersion(QQVersion.QQ_9_0_0)) {
+                Initiator.loadClass("com.tencent.mobileqq.bizParts.QQSettingMeProfileCardPart")
+            } else {
+                Initiator.loadClass("com.tencent.mobileqq.activity.qqsettingme.bizParts.QQSettingMeProfileCardPart")
+            }
+            */
+            val getOldStyleViewMethod = settingOldStyleClass.declaredMethods.single { method ->
+                val params = method.parameterTypes
+                method.isStatic && method.returnType == View::class.java && params.size == 1 && params[0] == settingOldStyleClass
+            }
+            var viewGroup: ViewGroup? = null
+            hookAfterIfEnabled(getOldStyleViewMethod) { param ->
+                viewGroup = param.result as ViewGroup
+            }
+            DexKit.loadMethodFromCache(NQQSettingMe_onResume)?.hookAfter(this) {
+                viewGroup?.post { updateView(viewGroup!!) }
+            }
         }
         hookBeforeIfEnabled(
             Initiator.loadClass("com.tencent.qqnt.kernel.api.impl.MsgService").getDeclaredMethod(

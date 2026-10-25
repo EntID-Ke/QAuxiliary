@@ -168,6 +168,7 @@ android {
         }
     }
     buildTypes {
+        getByName("debug") { versionNameSuffix = "-qiii2.1" }
         val signatureDigest: String? = getSignatureKeyDigest(signingConfigs.findByName("release"))
         if (signatureDigest != null) {
             println("Signature Digest: $signatureDigest")

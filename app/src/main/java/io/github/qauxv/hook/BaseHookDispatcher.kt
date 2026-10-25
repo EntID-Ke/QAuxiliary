@@ -51,7 +51,11 @@ abstract class BaseHookDispatcher<T : ITraceableDynamicHook>(
 
     abstract val decorators: Array<T>
 
+    @Synchronized
     override fun initialize(): Boolean {
+        if (!isAvailable) {
+            return false
+        }
         if (mInitialized) {
             return mInitializeResult
         }

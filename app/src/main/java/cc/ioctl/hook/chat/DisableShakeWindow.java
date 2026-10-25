@@ -24,11 +24,13 @@ package cc.ioctl.hook.chat;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import cc.ioctl.util.HookUtils;
+import cc.ioctl.util.HostInfo;
 import io.github.qauxv.base.annotation.FunctionHookEntry;
 import io.github.qauxv.base.annotation.UiItemAgentEntry;
 import io.github.qauxv.dsl.FunctionEntryRouter.Locations.Simplify;
 import io.github.qauxv.hook.CommonSwitchFunctionHook;
 import io.github.qauxv.util.Initiator;
+import io.github.qauxv.util.QQVersion;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -59,6 +61,12 @@ public class DisableShakeWindow extends CommonSwitchFunctionHook {
     @Override
     public String[] getUiItemLocation() {
         return Simplify.CHAT_OTHER;
+    }
+
+    @Override
+    public boolean isAvailable() {
+        // The classic QQ implementation is no longer present in QQ 9.3.75.
+        return !HostInfo.requireMinQQVersion(QQVersion.QQ_9_3_75);
     }
 
     @Override

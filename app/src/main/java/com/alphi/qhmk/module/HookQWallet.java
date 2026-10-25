@@ -32,7 +32,7 @@ public class HookQWallet extends CommonSwitchFunctionHook {
         Class<?> kQWalletHomeFragment = Initiator.load("com/tencent/mobileqq/qwallet/home/QWalletHomeFragment");
         if (kQWalletHomeFragment != null) {
             Class<?> kQWalletHomePreviewController = Initiator.load("com/tencent/mobileqq/qwallet/home/QWalletHomePreviewController");
-            if (kQWalletHomePreviewController != null) {
+            if (kQWalletHomePreviewController != null && !cc.ioctl.util.HostInfo.requireMinQQVersion(io.github.qauxv.util.QQVersion.QQ_9_3_75)) {
                 // 预防广告视图显示导致的黑屏
                 // public final QWalletHomePreviewController.?(QWallBaseFragment|QWalletBaseFragment)Z
                 Method methodIsShowAdView = ArraysKt.single(kQWalletHomePreviewController.getDeclaredMethods(),

@@ -144,7 +144,7 @@ public class CustomDeviceModel extends CommonConfigFunctionHook {
 
     @Override
     public boolean isEnabled() {
-        return RikkaCustomDeviceModelDialog.IsEnabled();
+        return io.github.qqmodulemanager.bridge.BridgeClient.effective("device_model", RikkaCustomDeviceModelDialog.IsEnabled());
     }
 
     @Override

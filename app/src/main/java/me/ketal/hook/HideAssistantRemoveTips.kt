@@ -29,6 +29,8 @@ import io.github.qauxv.base.annotation.UiItemAgentEntry
 import io.github.qauxv.dsl.FunctionEntryRouter
 import io.github.qauxv.hook.CommonSwitchFunctionHook
 import io.github.qauxv.util.Initiator
+import io.github.qauxv.util.QQVersion
+import io.github.qauxv.util.requireMinQQVersion
 import xyz.nextalone.util.replace
 import xyz.nextalone.util.throwOrTrue
 
@@ -41,6 +43,11 @@ object HideAssistantRemoveTips : CommonSwitchFunctionHook("ketal_hide_assistant_
     override val uiItemLocation = FunctionEntryRouter.Locations.Simplify.CHAT_GROUP_OTHER
 
     override fun initOnce() = throwOrTrue {
+        if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            Initiator.loadClass("com.tencent.qqnt.aio.toptip.TroopHelperTipsBar")
+                .getDeclaredMethod("c", Array<Any>::class.java).replace(this, null)
+            return@throwOrTrue
+        }
         val k = Initiator.loadClass("com/tencent/mobileqq/activity/ChatActivityUtils")
         val showChatTopBar = findMethod(k, false) {
             if (returnType == View::class.java) {

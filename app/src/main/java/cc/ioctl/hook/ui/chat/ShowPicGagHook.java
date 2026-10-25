@@ -71,6 +71,6 @@ public class ShowPicGagHook extends CommonSwitchFunctionHook {
 
     @Override
     public boolean isAvailable() {
-        return !HostInfo.isTim();
+        return !HostInfo.isTim() && !HostInfo.requireMinQQVersion(io.github.qauxv.util.QQVersion.QQ_9_3_75);
     }
 }

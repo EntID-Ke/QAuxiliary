@@ -75,7 +75,7 @@ import kotlin.concurrent.thread
 @FunctionHookEntry
 @UiItemAgentEntry
 object MultiActionHook : CommonSwitchFunctionHook(
-    arrayOf(
+    if (requireMinQQVersion(QQVersion.QQ_9_3_75)) arrayOf(MultiSelectToBottomIntent) else arrayOf(
         CMessageCache,
         CMessageRecordFactory,
         NBaseChatPie_createMulti,
@@ -120,7 +120,11 @@ object MultiActionHook : CommonSwitchFunctionHook(
         } else {
             Initiator.loadClass("com.tencent.mobileqq.aio.input.multiselect.MultiSelectBarVB").method("onCreateView")
         }!!.hookAfter(this) {
-            val rootView = findViewNt(it.method.declaringClass, it.thisObject) ?: return@hookAfter
+            val rootView = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+                Initiator.loadClass("com.tencent.mobileqq.aio.input.multiselect.k").getDeclaredMethod("P1")
+                    .invoke(it.thisObject) as? LinearLayout
+            } else findViewNt(it.method.declaringClass, it.thisObject)
+            rootView ?: return@hookAfter
             val context = rootView.context as AppActivity
             val count = rootView.childCount
             val iconResId: Int = if (ResUtils.isInNightMode()) R.drawable.ic_recall_28dp_white else R.drawable.ic_recall_28dp_black
@@ -160,7 +164,10 @@ object MultiActionHook : CommonSwitchFunctionHook(
             }
         }
 
-        if (requireMinTimVersion(TIMVersion.TIM_4_0_95_BETA)) {
+        if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            Initiator.loadClass("com.tencent.mobileqq.aio.input.multiselect.r")
+                .getDeclaredMethod("P", Initiator.loadClass("com.tencent.mobileqq.aio.input.multiselect.s"))
+        } else if (requireMinTimVersion(TIMVersion.TIM_4_0_95_BETA)) {
             // 20241228 TIM_NT 貌似使用别的方法
             DexKit.requireClassFromCache(MultiSelectBarVM).method("L")
         } else if (requireMinQQVersion(QQVersion.QQ_9_1_5_BETA_20015)) {
@@ -172,13 +179,15 @@ object MultiActionHook : CommonSwitchFunctionHook(
             val intent = it.args[0]
 
             val intentClass = DexKit.requireClassFromCache(MultiSelectToBottomIntent)
-            if (intent.javaClass.isAssignableFrom(intentClass)) {
+            if (intentClass.isInstance(intent)) {
                 val flags = Reflex.getFirstByType(intent, Int::class.java)
                 if (flags != -114514) return@hookBefore
                 val mContext = it.thisObject.invoke("getMContext")!!
                 val multiSelectUtilClazz = Initiator.loadClass("com.tencent.mobileqq.aio.msglist.holder.component.multifoward.b")
                 val selectUtil = Reflex.getStaticObject(multiSelectUtilClazz, "a")
-                val m = multiSelectUtilClazz.findMethod { returnType.isAssignableFrom(List::class.java) }
+                val m = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+                    multiSelectUtilClazz.getDeclaredMethod("f", Initiator.loadClass("com.tencent.aio.api.runtime.a"))
+                } else multiSelectUtilClazz.findMethod { returnType.isAssignableFrom(List::class.java) }
                 val list = (m.invoke(selectUtil, mContext) as List<*>)
                     .map { it!!.invoke("getMsgId") as Long }
                 Log.d("handleIntent, msg: ${list.joinToString("\n") { it.toString() }}")

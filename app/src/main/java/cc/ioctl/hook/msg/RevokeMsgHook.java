@@ -155,6 +155,9 @@ public class RevokeMsgHook extends CommonConfigFunctionHook {
     }
 
     private String getStateText() {
+        if (io.github.qqmodulemanager.bridge.BridgeClient.isManaged(io.github.qqmodulemanager.bridge.BridgeClient.RECALL)) {
+            return "由 QIII管理";
+        }
         if (isEnabled()) {
             return "已启用";
         } else {

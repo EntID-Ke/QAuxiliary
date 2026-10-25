@@ -32,6 +32,7 @@ import cc.ioctl.util.HookUtils
 import com.github.kyuubiran.ezxhelper.utils.isAbstract
 import io.github.duzhaokun123.hook.MessageCopyHook
 import io.github.duzhaokun123.hook.MessageTTSHook
+import io.github.qauxv.base.RuntimeErrorTracer
 import io.github.qauxv.base.annotation.FunctionHookEntry
 import io.github.qauxv.hook.BasePersistBackgroundHook
 import io.github.qauxv.util.Initiator
@@ -68,6 +69,14 @@ object MenuBuilderHook : BasePersistBackgroundHook() {
         RepeatToImg,
     )
 
+    override fun traceError(e: Throwable) {
+        super.traceError(e)
+        for (decorator in decorators) {
+            io.github.qqmodulemanager.bridge.BridgeClient.reportFailure(
+                io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(decorator.javaClass.name), e)
+        }
+    }
+
     override fun initOnce(): Boolean {
         if (QAppUtils.isQQnt()) { // NT only
             val msgItemClass = Initiator.loadClass("com.tencent.mobileqq.aio.msg.AIOMsgItem")
@@ -90,8 +99,9 @@ object MenuBuilderHook : BasePersistBackgroundHook() {
                         if (decorator.targetComponentTypes == null || target in decorator.targetComponentTypes!!) {
                             try {
                                 decorator.onGetMenuNt(msg, target, param)
-                            } catch (e: Exception) {
-                                traceError(e)
+                            } catch (e: Throwable) {
+                                if (e !is Exception && e !is LinkageError) throw e
+                                (decorator as? RuntimeErrorTracer)?.traceError(e) ?: super.traceError(e)
                             }
                         }
                     }

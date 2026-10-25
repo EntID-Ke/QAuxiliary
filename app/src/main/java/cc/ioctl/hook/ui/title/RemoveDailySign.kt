@@ -53,6 +53,15 @@ object RemoveDailySign : CommonSwitchFunctionHook("kr_remove_daily_sign") {
 
     override fun initOnce(): Boolean {
         if (hostInfo.packageName != HostInfo.PACKAGE_NAME_QQ) return false
+        if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            val part = loadClass("com.tencent.mobileqq.parts.QQSettingMeNavigationPartV3")
+            XposedBridge.hookMethod(part.getDeclaredMethod("onInitView", android.view.View::class.java),
+                HookUtils.afterIfEnabled(this) { param ->
+                    val view = part.getDeclaredField("i").apply { isAccessible = true }.get(param.thisObject) as? LinearLayout
+                    view?.setViewZeroSize()
+                })
+            return true
+        }
         val callback = HookUtils.afterIfEnabled(this) { param ->
             // em_drawer_sign_up
             val dailySignName = when {

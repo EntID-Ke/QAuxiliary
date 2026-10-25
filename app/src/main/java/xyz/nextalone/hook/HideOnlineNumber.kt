@@ -21,6 +21,9 @@
  */
 package xyz.nextalone.hook
 
+import io.github.qauxv.util.QQVersion
+import io.github.qauxv.util.requireMinQQVersion
+
 import io.github.qauxv.base.annotation.FunctionHookEntry
 import io.github.qauxv.base.annotation.UiItemAgentEntry
 import io.github.qauxv.dsl.FunctionEntryRouter
@@ -37,6 +40,9 @@ object HideOnlineNumber : CommonSwitchFunctionHook("na_hide_online_number") {
     override val name = "隐藏在线人数"
 
     override val uiItemLocation = FunctionEntryRouter.Locations.Simplify.CHAT_GROUP_TITLE
+
+    // The classic AIO entry is absent from QQ 9.3.75.
+    override val isAvailable = !requireMinQQVersion(QQVersion.QQ_9_3_75)
 
     override fun initOnce() = throwOrTrue {
         _TroopChatPie().method {

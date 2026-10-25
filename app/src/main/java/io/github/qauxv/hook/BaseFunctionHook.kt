@@ -56,10 +56,20 @@ abstract class BaseFunctionHook(
     override val isInitializationSuccessful: Boolean
         get() = mInitializeResult
 
+    @Synchronized
     override fun initialize(): Boolean {
+        if (io.github.qqmodulemanager.bridge.BridgeClient.deferInitialization(
+                io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(javaClass.name))) {
+            return false
+        }
+        if (!isAvailable) {
+            return false
+        }
         if (mInitialized) {
             return mInitializeResult
         }
+        io.github.qqmodulemanager.bridge.BridgeClient.hooksStarting(
+            io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(javaClass.name))
         mInitializeResult = try {
             initOnce()
         } catch (e: Throwable) {
@@ -104,18 +114,28 @@ abstract class BaseFunctionHook(
     override val isApplicationRestartRequired = false
 
     override var isEnabled: Boolean
-        get() = enableAllHook() ||
+        get() = io.github.qqmodulemanager.bridge.BridgeClient.effective(
+            io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(javaClass.name), enableAllHook() ||
             ConfigManager.getDefaultConfig().getBooleanOrDefault(
                 mHookEnableConfigKey,
                 mDefaultEnabled && isAvailable
-            )
+            ))
         set(value) {
+            if (io.github.qqmodulemanager.bridge.BridgeClient.isManaged(
+                    io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(javaClass.name))) return
             ConfigManager.getDefaultConfig().putBoolean(mHookEnableConfigKey, value)
         }
 
     override val dependentComponents: List<ITraceableDynamicHook>? = null
 
     override fun traceError(e: Throwable) {
+        if (javaClass.name == "cc.ioctl.hook.msg.RevokeMsgHook" &&
+            e.message?.startsWith("InitInitNtKernelRecallMsgHook failed") == true) {
+            io.github.qqmodulemanager.bridge.BridgeClient.reportConfirmedFailure(
+                io.github.qqmodulemanager.bridge.BridgeClient.RECALL, e)
+        }
+        io.github.qqmodulemanager.bridge.BridgeClient.reportFailure(
+            io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(javaClass.name), e)
         // check if there is already an error with the same error message and stack trace
         var alreadyLogged = false
         synchronized(mErrorsLock) {

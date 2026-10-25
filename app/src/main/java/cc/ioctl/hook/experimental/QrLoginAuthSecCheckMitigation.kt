@@ -22,6 +22,9 @@
 
 package cc.ioctl.hook.experimental
 
+import io.github.qauxv.util.QQVersion
+import io.github.qauxv.util.requireMinQQVersion
+
 import android.app.Activity
 import android.os.CountDownTimer
 import android.view.View
@@ -48,6 +51,9 @@ object QrLoginAuthSecCheckMitigation : CommonSwitchFunctionHook() {
     override val name: String = "跳过扫码风险登录五秒确认"
 
     override val uiItemLocation: Array<String> = FunctionEntryRouter.Locations.Auxiliary.EXPERIMENTAL_CATEGORY
+
+    // QRLoginAuthActivity no longer contains the CountDownTimer entry.
+    override val isAvailable = !requireMinQQVersion(QQVersion.QQ_9_3_75)
 
     override fun initOnce(): Boolean {
         if (QAppUtils.isQQnt()) {

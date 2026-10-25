@@ -71,7 +71,7 @@ public class FileShareExtHook extends CommonSwitchFunctionHook {
     public static final FileShareExtHook INSTANCE = new FileShareExtHook();
 
     private FileShareExtHook() {
-        super(SyncUtils.PROC_MAIN, new DexKitTarget[]{
+        super(SyncUtils.PROC_MAIN, requireMinQQVersion(QQVersion.QQ_9_3_75) ? new DexKitTarget[0] : new DexKitTarget[]{
                 FileBrowserActivity_InnerClass_onItemClick.INSTANCE,
                 DefaultFileModel.INSTANCE
         });
@@ -116,9 +116,13 @@ public class FileShareExtHook extends CommonSwitchFunctionHook {
         Class<?> kiShareActionSheet = Initiator.loadClass("com.tencent.mobileqq.widget.share.ShareActionSheet");
         // args
         Class<?> kFileBrowserModelBase = Initiator.loadClass("com.tencent.mobileqq.filemanager.fileviewer.model.FileBrowserModelBase");
-        Class<?> kDefaultFileModel = DexKit.requireClassFromCache(DefaultFileModel.INSTANCE);
+        Class<?> kDefaultFileModel = requireMinQQVersion(QQVersion.QQ_9_3_75)
+                ? Initiator.loadClass("com.tencent.mobileqq.filemanager.fileviewer.model.h")
+                : DexKit.requireClassFromCache(DefaultFileModel.INSTANCE);
         String fileViewerAdapterClassName;
-        if (requireMinQQVersion(QQVersion.QQ_9_2_0)) {//9.x.x-9.2.30
+        if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            fileViewerAdapterClassName = "com.tencent.mobileqq.filemanager.fileviewer.r";
+        } else if (requireMinQQVersion(QQVersion.QQ_9_2_0)) {//9.x.x-9.2.30
             fileViewerAdapterClassName = "com.tencent.mobileqq.filemanager.fileviewer.u";
         } else if (requireMinQQVersion(QQVersion.QQ_9_1_50)) {//9.1.50-9.1.75
             fileViewerAdapterClassName = "com.tencent.mobileqq.filemanager.fileviewer.j";
@@ -156,8 +160,14 @@ public class FileShareExtHook extends CommonSwitchFunctionHook {
         } else {
             fileBrowserManagerItemClassName = "com.tencent.mobileqq.filemanager.fileviewer.FileBrowserManager$2";
         }
-        Method onItemClick = Initiator.loadClass(fileBrowserManagerItemClassName).getDeclaredMethod("onItemClick", kActionSheetItem, kiShareActionSheet);
-        XposedBridge.hookMethod(onItemClick, mItemClickHandler);
+        if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            XposedBridge.hookMethod(kFileBrowserManager.getDeclaredMethod("c", kFileBrowserManager, kActionSheetItem, kiShareActionSheet), mItemClickHandler);
+            XposedBridge.hookMethod(kDefaultFileModel.getDeclaredMethod("f1",
+                    Initiator.loadClass("com.tencent.mobileqq.filemanager.data.FileManagerEntity"), ArrayList.class, kActionSheetItem), mItemClickHandler);
+        } else {
+            Method onItemClick = Initiator.loadClass(fileBrowserManagerItemClassName).getDeclaredMethod("onItemClick", kActionSheetItem, kiShareActionSheet);
+            XposedBridge.hookMethod(onItemClick, mItemClickHandler);
+        }
         Method mFileBrowserActivity_InnerClass_onItemClick = DexKit.loadMethodFromCache(FileBrowserActivity_InnerClass_onItemClick.INSTANCE);
         if (mFileBrowserActivity_InnerClass_onItemClick != null) {
             XposedBridge.hookMethod(mFileBrowserActivity_InnerClass_onItemClick, mItemClickHandler);
@@ -213,18 +223,23 @@ public class FileShareExtHook extends CommonSwitchFunctionHook {
     }
 
     private final XC_MethodHook mItemClickHandler = HookUtils.afterIfEnabled(this, param -> {
-        Object item = param.args[0];
+        boolean isNewCallback = requireMinQQVersion(QQVersion.QQ_9_3_75) && param.args.length == 3;
+        Object item = param.args[isNewCallback ? (param.thisObject == null ? 1 : 2) : 0];
         int id = (int) Reflex.getInstanceObject(item, "id", int.class);
         if (id == R.id.ShareActionSheet_shareFileWithExtApp) {
             Context ctx = null;
             // case 1
-            Object fileBrowserManager = Reflex.getFirstByTypeOrNull(param.thisObject, kFileBrowserManager);
+            Object fileBrowserManager = isNewCallback && param.thisObject == null
+                    ? param.args[0] : Reflex.getFirstByTypeOrNull(param.thisObject, kFileBrowserManager);
             if (fileBrowserManager != null) {
                 ctx = Reflex.getFirstByType(fileBrowserManager, Activity.class);
             }
+            if (isNewCallback && param.thisObject != null) {
+                ctx = Reflex.getFirstByType(param.thisObject, Activity.class);
+            }
             // case 2
             Class<?> kFileBrowserActivity = Initiator.load("com.tencent.mobileqq.filebrowser.FileBrowserActivity");
-            if (kFileBrowserActivity != null) {
+            if (kFileBrowserActivity != null && param.thisObject != null) {
                 Activity activity = (Activity) Reflex.getFirstByTypeOrNull(param.thisObject, kFileBrowserActivity);
                 if (activity != null) {
                     ctx = activity;

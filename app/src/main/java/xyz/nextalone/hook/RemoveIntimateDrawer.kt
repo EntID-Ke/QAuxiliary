@@ -21,6 +21,9 @@
  */
 package xyz.nextalone.hook
 
+import io.github.qauxv.util.QQVersion
+import io.github.qauxv.util.requireMinQQVersion
+
 import android.view.View
 import io.github.qauxv.base.annotation.FunctionHookEntry
 import io.github.qauxv.base.annotation.UiItemAgentEntry
@@ -42,6 +45,9 @@ object RemoveIntimateDrawer : CommonSwitchFunctionHook(
     override val name = "隐藏亲密抽屉"
 
     override val uiItemLocation = FunctionEntryRouter.Locations.Simplify.UI_CHAT_MSG
+
+    // The classic AIO entry is absent from QQ 9.3.75.
+    override val isAvailable = !requireMinQQVersion(QQVersion.QQ_9_3_75)
 
     override fun initOnce() = throwOrTrue {
         DexKit.requireClassFromCache(CIntimateDrawer).method {

@@ -22,6 +22,9 @@
 
 package cn.lliiooll.hook
 
+import android.content.Context
+import android.util.SparseArray
+import android.widget.LinearLayout
 import cc.ioctl.util.HookUtils
 import cc.ioctl.util.MsgRecordUtil
 import com.github.kyuubiran.ezxhelper.utils.findMethod
@@ -52,6 +55,26 @@ object AntiNickBlock : MultiItemDelayableHook(
 
 
     override fun initOnce(): Boolean {
+        if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            val inject = loadClass("com.tencent.mobileqq.aio.msglist.holder.component.nick.block.NickBlockInject")
+            val methods = inject.declaredMethods.filter {
+                it.returnType == SparseArray::class.java &&
+                    it.parameterTypes.contentEquals(arrayOf(Context::class.java, LinearLayout::class.java))
+            }
+            check(methods.isNotEmpty()) { "NickBlockInject methods not found" }
+            methods.forEach { method ->
+                method.hookMethod(HookUtils.afterIfEnabled(this) { param ->
+                    val blocks = param.result as SparseArray<*>
+                    val hidden = MsgRecordUtil.parseNickBlocks(activeItems)
+                    for (i in blocks.size() - 1 downTo 0) {
+                        if (blocks.valueAt(i)?.javaClass?.simpleName in hidden) {
+                            blocks.removeAt(i)
+                        }
+                    }
+                })
+            }
+            return true
+        }
         // com.tencent.mobileqq.aio.msglist.holder.component.nick.block.NickBlockInject
         //
         //     f149116b = arrayList;

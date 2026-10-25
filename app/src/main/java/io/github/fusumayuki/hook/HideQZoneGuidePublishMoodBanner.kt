@@ -24,6 +24,7 @@ package io.github.fusumayuki.hook
 
 import android.view.View
 import android.view.ViewStub
+import cc.ioctl.util.Reflex
 import cc.ioctl.util.HookUtils.hookBeforeIfEnabled
 import io.github.qauxv.util.xpcompat.XC_MethodHook.MethodHookParam
 import io.github.qauxv.base.annotation.FunctionHookEntry
@@ -31,6 +32,8 @@ import io.github.qauxv.base.annotation.UiItemAgentEntry
 import io.github.qauxv.dsl.FunctionEntryRouter
 import io.github.qauxv.hook.CommonSwitchFunctionHook
 import io.github.qauxv.util.Initiator
+import io.github.qauxv.util.QQVersion
+import io.github.qauxv.util.requireMinQQVersion
 
 @FunctionHookEntry
 @UiItemAgentEntry
@@ -42,14 +45,11 @@ object HideQZoneGuidePublishMoodBanner : CommonSwitchFunctionHook() {
 
     override val uiItemLocation: Array<String> = FunctionEntryRouter.Locations.Simplify.UI_MISC
 
-    private val qZoneGuidePublishMoodBannerMethodName = "h"
-
     override fun initOnce(): Boolean {
         val qZoneGuidePublishMoodBannerClass = Initiator.loadClass("com.qzone.component.banner.QZoneGuidePublishMoodBanner;")
-        val qZoneGuidePublishMoodBannerMethod = qZoneGuidePublishMoodBannerClass.getDeclaredMethod(
-            qZoneGuidePublishMoodBannerMethodName,
-            ViewStub::class.java
-        )
+        val qZoneGuidePublishMoodBannerMethod = if (requireMinQQVersion(QQVersion.QQ_9_3_75)) {
+            Reflex.findSingleMethod(qZoneGuidePublishMoodBannerClass, Void.TYPE, false, ViewStub::class.java)
+        } else qZoneGuidePublishMoodBannerClass.getDeclaredMethod("h", ViewStub::class.java)
 
         hookBeforeIfEnabled(this, qZoneGuidePublishMoodBannerMethod) { param: MethodHookParam ->
             val obj = param.thisObject as View
